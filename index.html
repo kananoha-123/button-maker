@@ -176,7 +176,7 @@ function dlg(title,body,btns,extra){
 $('#done').onclick=()=>dlg('完成にしますか?','このバッジを完成にします。あとから直すこともできます。',[['完成する','pri',afterDone],['もどる','sec']]);
 function afterDone(){
  if(S.badges.length>=3)return exportA4();
- dlg('つぎはどうしますか?',`いま${S.badges.length}個できています。作れるのは3個までです。`,[['もう1つ作る','pri',()=>{S.badges.push(mk());S.cur=S.badges.length-1;sel=null;save();ui()}],['ここで終わる(画像を保存)','sec',exportA4]])}
+ dlg('つぎはどうしますか?',`いま${S.badges.length}個できています。作れるのは3個までです。`,[['ここで終わる(画像を保存)','pri',exportA4],['もう1つ作る','sec',()=>{S.badges.push(mk());S.cur=S.badges.length-1;sel=null;save();ui()}]])}
 $('#cnt').onclick=()=>{dlg('どのバッジを直しますか?','',S.badges.map((b,i)=>[`${i+1}個目を直す`+(i===S.cur?'(いま作成中)':''),i===S.cur?'pri':'sec',()=>{S.cur=i;sel=null;save();ui()}]).concat([['とじる','']]))};
 $('#undo').onclick=()=>jump(-1);$('#redo').onclick=()=>jump(1);
 $('#del').onclick=()=>{const b=B();b.items=b.items.filter(i=>i!==sel);sel=null;commit();render()};
