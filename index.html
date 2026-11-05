@@ -18,7 +18,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .sec{border-color:var(--teal);background:var(--cream)}
 .dan{background:var(--red);color:var(--cream);font-weight:700}
 button:disabled{opacity:.4}
-#top{display:flex;align-items:center;gap:8px;padding:8px 12px;justify-content:space-between}
+#top{display:flex;align-items:center;gap:4px;padding:8px;justify-content:space-between}#top button{padding:0 8px}#top .r{display:flex;gap:6px}
 #top .l{display:flex;gap:4px;align-items:center}
 #cnt{font-weight:700;border-color:var(--teal);background:var(--cream);padding:0 10px}
 #stage{flex:1;min-height:0;background:var(--navy);display:flex;align-items:center;justify-content:center;position:relative}
@@ -54,7 +54,7 @@ input[type=text]{flex:1;min-width:0;min-height:44px;font:inherit;border:2px soli
 <body>
 <div id="top">
   <div class="l"><button id="cnt" aria-label="作ったバッジを切り替える"></button><button id="undo" class="sec" aria-label="元に戻す">↶</button><button id="redo" class="sec" aria-label="やり直す">↷</button></div>
-  <button id="done" class="pri">完成</button>
+  <div class="r"><button id="clr" class="dan">全部消す</button><button id="done" class="pri">完成</button></div>
 </div>
 <div id="stage"><canvas id="cv" width="830" height="830" aria-label="バッジのキャンバス"></canvas><button id="del" class="dan" hidden>削除</button></div>
 <div id="tabs" role="tablist"></div>
@@ -64,12 +64,12 @@ input[type=text]{flex:1;min-width:0;min-height:44px;font:inherit;border:2px soli
 <script>
 const D=830,R=415;
 const $=s=>document.querySelector(s);
-const PEN=['#313869','#3D7187','#A72E21','#EEE9D9','#000000','#FFFFFF','#E8416B','#F5A623','#F7DC3E','#4CB782','#4AA3E0','#8E5BD6'];
+const PEN=['#000000','#FFFFFF','#E8416B','#F5A623','#F7DC3E','#4CB782','#4AA3E0','#8E5BD6'];
 const BGS=[['ピンク','#FFD6E0'],['ピーチ','#FFE3CC'],['レモン','#FFF5C2'],['ミント','#D3F0E0'],['スカイ','#D0E8FA'],['ラベンダー','#E3D9F5']];
 const FONTS=[['Zen Maru Gothic',700],['Kiwi Maru',400],['Hachi Maru Pop',400],['Mochiy Pop One',400],['Yusei Magic',400],['Yomogi',400],['DotGothic16',400],['Dela Gothic One',400]];
 const WID=[6,16,34],SZN=['細','中','太'];
 const TABS=[['pen','ペン'],['img','画像'],['stp','スタンプ'],['txt','文字'],['bg','背景']];
-const svg=b=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'+b+'</svg>');
+const svg=b=>'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 6 88 88">'+b+'</svg>');
 const petals=[0,72,144,216,288].map(a=>`<circle cx="${50+27*Math.sin(a*Math.PI/180)}" cy="${50-27*Math.cos(a*Math.PI/180)}" r="19" fill="#F28DB2"/>`).join('');
 const STAMPS=[
  '<path d="M50 88C10 58 12 28 32 24c10-2 16 4 18 10 2-6 8-12 18-10 20 4 22 34-18 64z" fill="#E8416B"/>',
@@ -121,7 +121,7 @@ let raf;function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()
  x2.clearRect(0,0,D,D);const b=B();draw(x2,b,D);
  x2.lineWidth=4;x2.setLineDash([]);x2.strokeStyle='#fff';x2.beginPath();x2.arc(R,R,R*.8,0,7);x2.stroke();
  x2.setLineDash([14,12]);x2.strokeStyle='#313869';x2.beginPath();x2.arc(R,R,R*.8,0,7);x2.stroke();x2.setLineDash([]);
- if(sel&&b.items.includes(sel)){const[w,h]=size(sel);x2.save();x2.translate(sel.x,sel.y);x2.rotate(sel.r);x2.scale(sel.s,sel.s);const p=10/sel.s;
+ if(sel&&b.items.includes(sel)){const[w,h]=size(sel);x2.save();x2.translate(sel.x,sel.y);x2.rotate(sel.r);x2.scale(sel.s,sel.s);const p=3/sel.s;
   x2.lineWidth=5/sel.s;x2.strokeStyle='#fff';x2.strokeRect(-w/2-p,-h/2-p,w+2*p,h+2*p);x2.setLineDash([16/sel.s,10/sel.s]);x2.strokeStyle='#3D7187';x2.strokeRect(-w/2-p,-h/2-p,w+2*p,h+2*p);x2.restore();x2.setLineDash([])}
 })}
 function fit(){const s=$('#stage');const d=Math.floor(Math.min(s.clientWidth,s.clientHeight));cv.style.width=cv.style.height=d+'px'}
@@ -173,11 +173,9 @@ function dlg(title,body,btns,extra){
  const w=bx.querySelector('.btns');
  btns.forEach(([l,k,fn,keep])=>{const b=document.createElement('button');b.textContent=l;b.className=k;b.onclick=()=>{if(!keep)$('#ov').classList.remove('on');fn&&fn()};w.appendChild(b)});
  $('#ov').classList.add('on')}
-$('#done').onclick=()=>dlg('完成にしますか?','このバッジを完成にします。あとから直すこともできます。',[['完成する','pri',afterDone],['もどる','sec']]);
-function afterDone(){
- if(S.badges.length>=3)return exportA4();
- dlg('つぎはどうしますか?',`いま${S.badges.length}個できています。作れるのは3個までです。`,[['ここで終わる(画像を保存)','pri',exportA4],['もう1つ作る','sec',()=>{S.badges.push(mk());S.cur=S.badges.length-1;sel=null;save();ui()}]])}
-$('#cnt').onclick=()=>{dlg('どのバッジを直しますか?','',S.badges.map((b,i)=>[`${i+1}個目を直す`+(i===S.cur?'(いま作成中)':''),i===S.cur?'pri':'sec',()=>{S.cur=i;sel=null;save();ui()}]).concat([['とじる','']]))};
+$('#done').onclick=exportA4;
+$('#clr').onclick=()=>dlg('全部消しますか?','このバッジの絵・写真・文字・スタンプがすべて消えます。元に戻すボタンで戻せます。',[['全部消す','dan',()=>{const b=B();b.items=[];sel=null;commit();render()}],['やめる','sec']]);
+$('#cnt').onclick=()=>{dlg('バッジを選ぶ・追加する','',S.badges.map((b,k)=>[`${k+1}個目を直す`+(k===S.cur?'(いま作成中)':''),k===S.cur?'pri':'sec',()=>{S.cur=k;sel=null;save();ui()}]).concat(S.badges.length<3?[['バッジを追加する','sec',()=>{S.badges.push(mk());S.cur=S.badges.length-1;sel=null;save();ui()}]]:[]).concat([['とじる','']]))};
 $('#undo').onclick=()=>jump(-1);$('#redo').onclick=()=>jump(1);
 $('#del').onclick=()=>{const b=B();b.items=b.items.filter(i=>i!==sel);sel=null;commit();render()};
 
@@ -202,6 +200,7 @@ async function exportA4(){
 const lum=h=>{const n=parseInt(h.slice(1),16),f=v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4};return .2126*f(n>>16)+.7152*f(n>>8&255)+.0722*f(n&255)};
 const ck=h=>lum(h)>.4?'#000':'#fff';
 const swatch=(a,c,on,l)=>`<button class="sw" data-a="${a}" data-v="${c}" aria-pressed="${on}" aria-label="${l||c}" style="background:${c};color:${ck(c)}">${on?'✓':''}</button>`;
+const free=(id,v)=>`<label class="chip" style="display:inline-flex;align-items:center;gap:6px;border:2px solid var(--navy);border-radius:10px;min-height:44px;padding:0 10px">自由色<input type="color" id="${id}" value="${v}" style="width:32px;height:32px;border:0;padding:0;background:none"></label>`;
 function ui(){
  const b=B();$('#cnt').textContent=`${S.cur+1}/3個目`;
  $('#undo').disabled=b.hi<=0;$('#redo').disabled=b.hi>=b.hist.length-1;$('#del').hidden=!(sel&&b.items.includes(sel));
@@ -210,14 +209,13 @@ function ui(){
  if(t==='pen')h=`<div class="row scr">${PEN.map(c=>swatch('color',c,!U.erase&&U.color===c)).join('')}</div>
  <div class="row scr">${SZN.map((l,i)=>`<button class="chip" data-a="size" data-v="${i}" aria-pressed="${U.size===i}">${l}</button>`).join('')}
  <button class="chip" data-a="erase" aria-pressed="${U.erase}">消しゴム</button>
- <label class="chip" style="display:inline-flex;align-items:center;gap:6px;border:2px solid var(--navy);border-radius:10px;min-height:44px;padding:0 10px">自由色<input type="color" id="cc" value="${U.color}" style="width:32px;height:32px;border:0;padding:0;background:none"></label></div>`;
+ ${free('cc',U.color)}</div>`;
  if(t==='img')h=`<button class="pri" data-a="img">写真を選ぶ(あと${5-b.items.filter(i=>i.t==='img').length}枚)</button><p class="note">写真は何枚でも選べます。指でつまんで大きさや向きを変えられます。</p>`;
  if(t==='stp')h=`<div class="row scr">${STAMPS.map((s,i)=>`<button class="stp" data-a="stamp" data-v="${i}" aria-label="スタンプ${i+1}"><img src="${s}" alt=""></button>`).join('')}</div><p class="note">タップすると中央に置かれます。</p>`;
  if(t==='txt')h=`<div class="row"><input type="text" id="ti" placeholder="文字を入れる" maxlength="20" value="${U.txt.replace(/"/g,'&quot;')}" aria-label="文字"><button class="pri" data-a="add">追加</button></div>
  <div class="row scr">${FONTS.map((f,i)=>`<button class="chip" data-a="font" data-v="${i}" aria-pressed="${U.font===i}" style="font-family:'${f[0]}';font-weight:${f[1]}">${i+1} あいう</button>`).join('')}</div>
- <div class="row scr"><button class="chip" data-a="outline" aria-pressed="${U.outline}">白い縁取り</button>${PEN.map(c=>swatch('tc',c,U.tc===c)).join('')}</div>`;
- if(t==='bg')h=`<div class="row scr">${BGS.map(([n,c])=>swatch('bg',c,b.bg===c,n)).join('')}<button class="sw" data-a="bg" data-v="#FFFFFF" aria-pressed="${b.bg==='#FFFFFF'}" aria-label="白" style="background:#fff;color:#000">${b.bg==='#FFFFFF'?'✓':''}</button></div>
- <button class="dan" data-a="clear">全部消す</button>`;
+ <div class="row scr"><button class="chip" data-a="outline" aria-pressed="${U.outline}">白い縁取り</button>${PEN.map(c=>swatch('tc',c,U.tc===c)).join('')}${free('ct',U.tc)}</div>`;
+ if(t==='bg')h=`<div class="row scr">${BGS.map(([n,c])=>swatch('bg',c,b.bg===c,n)).join('')}<button class="sw" data-a="bg" data-v="#FFFFFF" aria-pressed="${b.bg==='#FFFFFF'}" aria-label="白" style="background:#fff;color:#000">${b.bg==='#FFFFFF'?'✓':''}</button>${free('cb',b.bg)}</div>`;
  const pn=$('#panel'),sl=[...pn.querySelectorAll('.scr')].map(e=>e.scrollLeft),sy=pn.scrollTop,same=ui.t===t;ui.t=t;
  pn.innerHTML=h;if(same){pn.querySelectorAll('.scr').forEach((e,k)=>e.scrollLeft=sl[k]||0);pn.scrollTop=sy}
  fit();render()}
@@ -226,7 +224,9 @@ $('#panel').addEventListener('input',e=>{
  if(e.target.id==='ti'){U.txt=e.target.value;if(sel&&sel.t==='txt'&&B().items.includes(sel)){sel.text=U.txt;render();save()}}});
 $('#panel').addEventListener('change',e=>{
  if(e.target.id==='ti'&&sel&&sel.t==='txt'){commit()}
- if(e.target.id==='cc'){U.color=e.target.value;U.erase=false;ui()}});
+ if(e.target.id==='cc'){U.color=e.target.value;U.erase=false;ui()}
+ if(e.target.id==='ct'){U.tc=e.target.value;const q=sel;if(q&&q.t==='txt'&&B().items.includes(q)){q.c=U.tc;commit()}else ui()}
+ if(e.target.id==='cb'){B().bg=e.target.value;commit()}});
 $('#panel').addEventListener('keydown',e=>{if(e.target.id==='ti'&&e.key==='Enter')addText()});
 $('#panel').onclick=e=>{
  const k=e.target.closest('[data-a]');if(!k)return;const a=k.dataset.a,v=k.dataset.v,b=B(),tx=sel&&sel.t==='txt'&&b.items.includes(sel)?sel:null;
@@ -234,13 +234,12 @@ $('#panel').onclick=e=>{
  else if(a==='size')U.size=+v;
  else if(a==='erase')U.erase=!U.erase;
  else if(a==='img')return $('#file').click();
- else if(a==='stamp'){const q=.01;addItem({t:'img',src:STAMPS[+v],w:300,h:300,x:R,y:R,s:1,r:0});return ui()}
+ else if(a==='stamp'){const q=.01;addItem({t:'img',src:STAMPS[+v],w:264,h:264,x:R,y:R,s:1,r:0});return ui()}
  else if(a==='add')return addText();
  else if(a==='font'){U.font=+v;if(tx){tx.f=U.font;commit();document.fonts.load(fnt(tx),tx.text).then(render);return}}
  else if(a==='tc'){U.tc=v;if(tx){tx.c=v;commit();return}}
  else if(a==='outline'){U.outline=!U.outline;if(tx){tx.o=U.outline;commit();return}}
  else if(a==='bg'){b.bg=v;commit();return}
- else if(a==='clear')return dlg('全部消しますか?','このバッジの絵・写真・文字・スタンプがすべて消えます。元に戻すボタンで戻せます。',[['全部消す','dan',()=>{b.items=[];sel=null;commit();render()}],['やめる','sec']]);
  ui()};
 
 /* ---------- 初回説明 ---------- */
