@@ -98,12 +98,25 @@ const IM={};const getImg=s=>IM[s]||(IM[s]=Object.assign(new Image(),{src:s,onloa
 const fnt=i=>`${FONTS[i.f][1]} 100px "${FONTS[i.f][0]}",sans-serif`;
 function size(i){if(i.t==='txt'){mc.font=fnt(i);return[mc.measureText(i.text||' ').width+20,130]}return[i.w,i.h]}
 function drawItem(c,i,bg){
- if(i.t==='stroke'){c.strokeStyle=i.e?bg:i.c;c.lineWidth=i.w;c.lineCap=c.lineJoin='round';c.beginPath();c.moveTo(i.p[0],i.p[1]);for(let k=2;k<i.p.length;k+=2)c.lineTo(i.p[k],i.p[k+1]);if(i.p.length===2)c.lineTo(i.p[0]+.01,i.p[1]);c.stroke();return}
+ if(i.t==='stroke'){c.globalCompositeOperation=i.e?'destination-out':'source-over';c.strokeStyle=i.c;c.lineWidth=i.w;c.lineCap=c.lineJoin='round';c.beginPath();c.moveTo(i.p[0],i.p[1]);for(let k=2;k<i.p.length;k+=2)c.lineTo(i.p[k],i.p[k+1]);if(i.p.length===2)c.lineTo(i.p[0]+.01,i.p[1]);c.stroke();c.globalCompositeOperation='source-over';return}
  c.save();c.translate(i.x,i.y);c.rotate(i.r);c.scale(i.s,i.s);
  if(i.t==='txt'){c.font=fnt(i);c.textAlign='center';c.textBaseline='middle';if(i.o){c.strokeStyle='#fff';c.lineWidth=20;c.lineJoin='round';c.strokeText(i.text,0,0)}c.fillStyle=i.c;c.fillText(i.text,0,0)}
  else{const m=getImg(i.src);if(m.complete&&m.naturalWidth)c.drawImage(m,-i.w/2,-i.h/2,i.w,i.h)}
  c.restore()}
-function draw(c,b,d){c.save();c.scale(d/D,d/D);c.beginPath();c.arc(R,R,R,0,7);c.clip();c.fillStyle=b.bg;c.fillRect(0,0,D,D);b.items.forEach(i=>drawItem(c,i,b.bg));c.restore()}
+const TC=document.createElement('canvas'),T2=TC.getContext('2d');
+function draw(c,b,d){c.save();c.scale(d/D,d/D);c.beginPath();c.arc(R,R,R,0,7);c.clip();c.fillStyle=b.bg;c.fillRect(0,0,D,D);
+ const it=b.items;
+ if(!it.some(i=>i.e))it.forEach(i=>drawItem(c,i));
+ else{/* 消しゴムは線だけを消し、写真・文字・スタンプは消さない */
+  let k=0;while(k<it.length){
+   if(it[k].t!=='stroke'){drawItem(c,it[k]);k++;continue}
+   let e=k;while(e<it.length&&it[e].t==='stroke')e++;
+   if(TC.width!==Math.round(d)){TC.width=TC.height=Math.round(d)}
+   T2.setTransform(1,0,0,1,0,0);T2.clearRect(0,0,TC.width,TC.height);T2.scale(TC.width/D,TC.width/D);
+   for(let j=k;j<e;j++)drawItem(T2,it[j]);
+   for(let j=e;j<it.length;j++)if(it[j].e)drawItem(T2,it[j]);
+   c.drawImage(TC,0,0,D,D);k=e}}
+ c.restore()}
 let raf;function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{
  x2.clearRect(0,0,D,D);const b=B();draw(x2,b,D);
  x2.lineWidth=4;x2.setLineDash([]);x2.strokeStyle='#fff';x2.beginPath();x2.arc(R,R,R*.8,0,7);x2.stroke();
@@ -205,7 +218,9 @@ function ui(){
  <div class="row scr"><button class="chip" data-a="outline" aria-pressed="${U.outline}">白い縁取り</button>${PEN.map(c=>swatch('tc',c,U.tc===c)).join('')}</div>`;
  if(t==='bg')h=`<div class="row scr">${BGS.map(([n,c])=>swatch('bg',c,b.bg===c,n)).join('')}<button class="sw" data-a="bg" data-v="#FFFFFF" aria-pressed="${b.bg==='#FFFFFF'}" aria-label="白" style="background:#fff;color:#000">${b.bg==='#FFFFFF'?'✓':''}</button></div>
  <button class="dan" data-a="clear">全部消す</button>`;
- $('#panel').innerHTML=h;fit();render()}
+ const pn=$('#panel'),sl=[...pn.querySelectorAll('.scr')].map(e=>e.scrollLeft),sy=pn.scrollTop,same=ui.t===t;ui.t=t;
+ pn.innerHTML=h;if(same){pn.querySelectorAll('.scr').forEach((e,k)=>e.scrollLeft=sl[k]||0);pn.scrollTop=sy}
+ fit();render()}
 $('#tabs').onclick=e=>{const k=e.target.closest('[data-t]');if(!k)return;U.tool=k.dataset.t;if(U.tool==='pen')sel=null;ui()};
 $('#panel').addEventListener('input',e=>{
  if(e.target.id==='ti'){U.txt=e.target.value;if(sel&&sel.t==='txt'&&B().items.includes(sel)){sel.text=U.txt;render();save()}}});
