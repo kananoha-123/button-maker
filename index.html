@@ -192,8 +192,8 @@ async function exportA4(){
  c.toBlob(bl=>{const u=URL.createObjectURL(bl),f=new File([bl],'badge-print-A4.png',{type:'image/png'});
   const can=navigator.canShare&&navigator.canShare({files:[f]});
   dlg('印刷データができました','画像を長押しして「写真に追加」などで保存してください。印刷はA4・拡大縮小なし(100%)で行います。',
-   [['画像を保存','pri',()=>{const a=document.createElement('a');a.href=u;a.download='badge-print-A4.png';document.body.appendChild(a);a.click();a.remove()},1]]
-   .concat(can?[['共有・保存','sec',()=>navigator.share({files:[f]}).catch(()=>{}),1]]:[]).concat([['編集にもどる','']]),
+   [['共有・保存','pri',()=>{if(can){navigator.share({files:[f]}).catch(()=>{})}else{const a=document.createElement('a');a.href=u;a.download='badge-print-A4.png';document.body.appendChild(a);a.click();a.remove()}},1]]
+   .concat([['編集にもどる','']]),
    `<img src="${u}" alt="A4印刷データ">`);
   // 保存ボタンはダイアログを閉じるので、再表示しない
  },'image/png')}
